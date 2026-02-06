@@ -4,6 +4,9 @@ import 'dotenv/config'
 import { connectedDB } from './src/config/db.config.js';
 import { inngest, functions } from "./src/ingest/index.js"
 import { serve } from "inngest/express";
+import { clerkMiddleware } from '@clerk/express'
+import userRouter from './src/routes/userRoutes.js';
+
 
 
 
@@ -13,6 +16,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(cors());
+app.use(clerkMiddleware())
 
 
 // apis there
@@ -21,6 +25,7 @@ app.get('/' ,  (req, res) => {
 });
 
 app.use("/api/inngest", serve({ client: inngest, functions }));
+app.use('/api/user' , userRouter)
 
 
 
