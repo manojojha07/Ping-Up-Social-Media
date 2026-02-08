@@ -1,7 +1,10 @@
+import { triggerAsyncId } from "async_hooks";
 import imagekit from "../config/imagekit.js";
 import Connection from "../models/Connection.js";
 import User from "../models/userModel.js";
 import fs from 'fs'
+import Post from "../models/post.js";
+import { inngest } from "../ingest/index.js";
 
 
 
@@ -66,7 +69,7 @@ export const updateUserData = async (req, res) => {
                     { width: '512' }
                 ]
             })
-           updatedData.profile_picture = url;
+           updatedData.profile_image = url;
         }
 
         if (cover) {
@@ -188,6 +191,10 @@ export const unfollowUser = async (req, res) => {
 
 
 
+
+
+
+
 // send connection request 
 export const sendConnectionRequest = async(req , res) => {
 try {
@@ -210,11 +217,17 @@ try {
          })
 
          if(!connection) {
-            await Connection.create({
+          const newConnection = await Connection.create({
                 from_user_id : userId,
                 to_user_id: id
-            })
-            return res.json({success:true, message:"Connection request sent successfully"})
+            });
+
+             await inngest.send({
+                name: 'app/connections-request',
+                data : {connectionId : newConnection._id}
+             });
+
+            return res.json({success:true, message:"Connection request sent successfully"});
          }
          else if(connection && connection.status === 'accepted'){
             return res.json({success:false, message:"you Allready Connected!"})
@@ -277,4 +290,25 @@ try {
      console.log("erro acept request");
         res.json({ success: false, message: error.message })
 }
+}
+
+
+
+// /get user profiles
+export const getUserProfiles  = async(req , res) => {
+    try {
+        const { profileId } = req.body;
+
+        const profile = await User.findById(profileId);
+        if(!profile){
+            res.json({success:false, message:"profile not found!"})
+        }
+        const posts = await Post.find({user : profileId }).populate('user');
+        res.json({success:false, profile, posts})
+        
+        
+    } catch (error) {
+        console.log("get user  request");
+        res.json({ success: false, message: error.message })
+    }
 }
