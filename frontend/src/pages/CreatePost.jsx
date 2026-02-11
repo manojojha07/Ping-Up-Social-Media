@@ -2,17 +2,54 @@ import React, { useState } from 'react'
 import { dummyUserData } from '../assets/assets';
 import { Image, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useSelector } from 'react-redux';
+import { useAuth } from '@clerk/clerk-react'
+import api from '../api/axios.js';
+import { useNavigate } from 'react-router-dom'
 
 const CreatePost = () => {
+
+  const {getToken} = useAuth();
+  const navigate = useNavigate();
+
   const [content, setContent] = useState('')
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
 
 
-  const user = dummyUserData;
+  const user = useSelector((state) => state.user.value);
 
-  const handleSubmit = async() =>{
+  const handleSubmit = async () => {
+    if (!images.length && !content) {
+      return toast.error("add image and text");
+    }
+    setLoading(true);
+    const postType = images.length && content ? 'text-with-image' : images.length ? 'image' : 'text'
 
+    try {
+      const formData = new FormData();
+      formData.append('content', content)
+      formData.append('post_type', postType)
+      images.map((image) => {
+        formData.append('images', image)
+      });
+
+      const { data } = await api.post('/api/post/add', formData, {
+        headers: { Authorization: `Bearer ${await getToken()}` }
+      })
+      if (data.success) {
+        navigate('/');
+      }
+      else {
+        console.log(data.message);
+        throw new Error(data.message)
+      }
+
+    } catch (error) {
+      console.log(error.message);
+      throw new Error(error.message);
+    }
+    setLoading(false);
   }
 
   return (
@@ -49,7 +86,7 @@ const CreatePost = () => {
                   <div className="absolute hidden group-hover:flex bg-black/40  justify-center items-center top-0
              right-0 bottom-0 left-0 rounded-md cursor-pointer"
                     onClick={() => setImages(images.filter((_, index) => index !== i))}>
-                    <X 
+                    <X
                       className='w-6 h-6 text-white' />
                   </div>
                 </div>
@@ -79,19 +116,25 @@ const CreatePost = () => {
               Add Image
             </label>
 
-            <button disabled={loading} onClick={()=> toast.promise(handleSubmit,
-              {
-                loading: 'uploading..',
-                success: <p>Post Added</p>,
-                error : <p>Post Not Added</p>          
+            <button
+              disabled={loading}
+              onClick={() =>
+                toast.promise(
+                  handleSubmit(), // 👈 function CALL
+                  {
+                    loading: 'Uploading...',
+                    success: 'Post Added ✅',
+                    error: 'Post Not Added ❌',
+                  }
+                )
               }
-            )}
               className="text-sm bg-gradient-to-r from-indigo-500 to-purple-600
-    hover:from-indigo-700 hover:to-purple-700 rounded-md
-    active:scale-95 transition text-white font-medium px-8 py-2"
+              hover:from-indigo-700 hover:to-purple-700 rounded-md
+                 active:scale-95 transition text-white font-medium px-8 py-2"
             >
               Publish Post
             </button>
+
 
           </div>
 

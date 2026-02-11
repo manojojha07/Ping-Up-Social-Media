@@ -5,48 +5,49 @@ import User from '../models/userModel.js';
 import { inngest } from '../ingest/index.js';
 
 
+import fs from 'fs';
+
 export const addUserStory = async (req, res) => {
-    try {
-        const { userId } = req.auth();
-        const { content, media_type, background_color } = req.body;
+  try {
+    const { userId } = req.auth();
+    const { content, media_type, background_color } = req.body;
 
-        const media = req.file
-        let media_url = ' '
+    const media = req.file;
+    let media_url = '';
 
-        //  upload media to imagekit
-        if (media_type === 'image' || media_type === 'video') {
-            const fileBuffer = readFileSync(media.path)
-            const response = await imagekit.upload({
-                file: File,
-                fileName: media.originalname,
-            })
-            media_url = response.url
-        }
-
-
-        // create story
-        const story = await Story.create({
-            user: userId,
-            content,
-            media_url,
-            media_type,
-            background_color
-        })
-
-//   sehedule story delteion after 24 hours
-
-   await inngest.send({
-    name: 'app.story.delete',
-    data : {storyId : story._id}
-   })
-
-        res.json({success:true})
-
-    } catch (error) {
-        console.log("upload userstory  ");
-        res.json({ success: false, message: error.message })
+    // Upload media to ImageKit only if file exists
+    if ((media_type === 'image' || media_type === 'video') && media) {
+      const fileBuffer = fs.readFileSync(media.path);
+      const response = await imagekit.upload({
+        file: fileBuffer,
+        fileName: media.originalname,
+      });
+      media_url = response.url;
     }
-}
+
+    // Create story
+    const story = await Story.create({
+      user: userId,
+      content,
+      media_url,
+      media_type,
+      background_color,
+    });
+
+    // Schedule story deletion after 24 hours
+    await inngest.send({
+      name: 'app/story.delete',
+      data: { storyId: story._id },
+    });
+
+    res.json({ success: true, message: 'Story created successfully' });
+
+  } catch (error) {
+    console.log("Upload user story error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 
 
 // get story allm users

@@ -2,19 +2,45 @@ import React, { useEffect, useState } from 'react'
 import { dummyMessagesData } from '../assets/assets';
 import  { Link } from 'react-router-dom'
 import moment from 'moment';
+import { useAuth, useUser } from '@clerk/clerk-react';
+import api from '../api/axios';
+import toast from 'react-hot-toast';
 
 const RecentMessage = () => {
     const [messages , setMessages] = useState([]);
-
+ 
+    const { getToken } = useAuth();
+    const  {user } = useUser();
 
     const fetchRecentMessages = async () => {
-     setMessages(dummyMessagesData);
+     try {
+      const { data } = await api.get('/api/user/recent-messages' ,  {headers:
+      { Authorization : `Bearer ${await getToken()}`}
+     })
+     if(data.success){
+      const groupedMessages = data.messages.reduce((acc, message) => {
+        const senderId = message.from_user_id._id
+        if(acc[senderId] || new Date(message.createdAt) > new Date(acc[senderId].createdAt)){
+          acc[senderId] = message;
+        }
+        return acc;
+      },{})
+
+      // sort message by date
+      const sortedMessage = Object.values(groupedMessages).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt))
+      setMessages(sortedMessage)
+     }
+     else(
+      toast.error(data.message)
+     )
+     } catch (error) {
+      toast.error(error.message)
+     }
     } 
     useEffect(()=> {
         fetchRecentMessages();
     },[])
 
-    console.log(messages);
     
      return (
     <div className='bg-white max-w-xs mt-4 p-4 min-h-20 rounded-md shadow

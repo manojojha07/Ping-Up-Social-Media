@@ -45,9 +45,9 @@ export const sendMessage =async(req, res) => {
         const image = req.file;
 
         let media_url = ' ' ;
-        let message_type = image ? ' image' : 'text';
+        let message_type = image ? 'image' : 'text';
 
-        if(message === 'image'){
+        if(message_type === 'image'){
             const fileBuffer = fs.readFileSync(image.path);
             const response = await imagekit.upload({
                 file : fileBuffer,
@@ -115,7 +115,8 @@ export const getChatMessages = async (req, res) => {
 export const getUserRecentMessages = async(req, res) => {
 try {
     const { userId } = req.auth();
-    const messages = await Message.find({to_user_id: userId}.populate('from_user_id to_user_id')).sort({created_at : -1});
+    const messages = await Message.find({to_user_id: userId})
+        .populate('from_user_id ,to_user_id').sort({created_at : -1});
 
     res.json({success:true, messages});
     

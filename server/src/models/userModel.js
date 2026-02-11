@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema({
         type:String,
         default :"Hey thee! I am using Pingup."
     },
-     profile_image:{
+     profile_picture:{
         type:String,
         default :''
     },

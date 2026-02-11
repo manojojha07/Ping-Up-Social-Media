@@ -71,7 +71,7 @@ try {
 
 // like posts
 
-export const likePost = async() => {
+export const likePost = async(req, res) => {
     try {
         const { userId } = req.auth();
         const { postId } = req.body;

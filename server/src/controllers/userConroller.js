@@ -69,14 +69,14 @@ export const updateUserData = async (req, res) => {
                     { width: '512' }
                 ]
             })
-           updatedData.profile_image = url;
+           updatedData.profile_picture = url;
         }
 
         if (cover) {
             const buffer = fs.readFileSync(cover.path);
             const response = await imagekit.upload({
                 file: buffer,
-                fileName: profile.originalname,
+                fileName: cover.originalname,
             });
             const url = imagekit.url({
                 path: response.filePath,
@@ -106,30 +106,35 @@ export const updateUserData = async (req, res) => {
 
 // find user using username email location name
 export const dicoverUsers = async (req, res) => {
-    try {
-        const { userId } = req.auth();
-        const { input } = req.body;
+  try {
+    const { userId } = req.auth();
+    const { input } = req.body;
 
-        const allUser = await User.find(
-            {
-                $or: [
-                    { username: new RegExp(input, 'i') },
-                    { email: new RegExp(input, 'i') },
-                    { full_name: new RegExp(input, 'i') },
-                    { location: new RegExp(input, 'i') },
-                ]
-            }
-        )
+    const allUser = await User.find({
+      $or: [
+        { username: new RegExp(input, 'i') },
+        { email: new RegExp(input, 'i') },
+        { full_name: new RegExp(input, 'i') },
+        { location: new RegExp(input, 'i') },
+      ]
+    });
 
-        const filterUsers = allUser.filter(user => user._id !== userId)
+    // ✅ SAFE comparison
+    const filterUsers = allUser.filter(
+      user => user._id.toString() !== userId
+    );
 
-        res.json({ succes: true, users: filterUsers })
+    res.json({ success: true, users: filterUsers });
 
-    } catch (error) {
-        console.log("erro get user");
-        res.json({ success: false, message: error.message })
-    }
-}
+  } catch (error) {
+    console.log("error get user", error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 
 // folllow users
 export const followUser = async (req, res) => {
@@ -139,7 +144,7 @@ export const followUser = async (req, res) => {
 
         const user = await User.findById(userId);
         if (user.following.includes(id)) {
-            res.json({ succes: true, message: "you are allready folllwing this user!" })
+          return  res.json({ success: true, message: "you are allready folllwing this user!" })
         }
         user.following.push(id);
         await user.save();
@@ -149,11 +154,11 @@ export const followUser = async (req, res) => {
         toUser.followers.push(userId);
         await toUser.save();
 
-        res.json({ success: true, message: "Now follow this user!" })
+        res.json({ success: true, message:" Now follow this user! " })
 
 
     } catch (error) {
-        console.log("erro get user");
+        console.log("error folow  user");
         res.json({ success: false, message: error.message })
     }
 }
@@ -246,7 +251,7 @@ try {
      const  {userId} = req.auth();
      const user = await User.findById(userId).populate('connections followers following')
 
-     const connections = user.connection
+     const connections = user.connections
      const followers = user.followers
      const following = user.following
 
@@ -301,10 +306,10 @@ export const getUserProfiles  = async(req , res) => {
 
         const profile = await User.findById(profileId);
         if(!profile){
-            res.json({success:false, message:"profile not found!"})
+           return res.json({success:false, message:"profile not found!"})
         }
         const posts = await Post.find({user : profileId }).populate('user');
-        res.json({success:false, profile, posts})
+        res.json({success:true, profile, posts})
         
         
     } catch (error) {
