@@ -176,7 +176,7 @@ export const unfollowUser = async (req, res) => {
 
 
         const toUser = await User.findById(id);
-        toUser.followers = user.followers.filter(user => user !== id);
+        toUser.followers = toUser.followers.filter(user => user !== userId);
         await toUser.save();
 
         res.json({ success: true, message: "you are not longer follwing this user!" });
@@ -268,34 +268,62 @@ try {
 }
 
 // accepting requests
-export const acceptedUserRequest = async(req , res) => {
-try {
-     const  {userId} = req.auth();
-     const {id} = req.body;
+export const acceptedUserRequest = async (req, res) => {
+  try {
+    const { userId } = req.auth();
+    const { id } = req.body;
 
-     const connection = await Connection.findOne({from_user_id: id, to_user_id: userId})
+    const connection = await Connection.findOne({
+      from_user_id: id,
+      to_user_id: userId,
+    //   status: "pending",
+    });
 
-     if(!connection){
-   return res.json({success:true, message:"connectin not found"});
-     }
-     const user = await User.findById(userId)
+    if (!connection) {
+      return res.json({
+        success: false,
+        message: "Connection not found",
+      });
+    }
+
+    // Logged in user
+    const user = await User.findById(userId);
      user.connections.push(id);
      await user.save();
 
-     const toUser = await User.findById(id)
-     user.connections.push(userId);
+    // Sender user
+    const toUser = await User.findById(id);
+    user.connections.push(userId);
      await toUser.save();
 
-     connection.status = 'accepted';
-     await connection.save();
-     res.json({success:true, message:'Connection acceptd successfully'})
+     
 
+    // // ✅ Prevent duplicates
+    // if (!user.connections.includes(id)) {
+    //   user.connections.push(id);
+    // }
 
-} catch (error) {
-     console.log("erro acept request");
-        res.json({ success: false, message: error.message })
-}
-}
+    // if (!toUser.connections.includes(userId)) {
+    //   toUser.connections.push(userId);
+    // }
+
+    // await user.save();
+    // await toUser.save();
+
+    // Update connection status
+    connection.status = "accepted";
+    await connection.save();
+
+    res.json({
+      success: true,
+      message: "Connection accepted successfully",
+    });
+  } catch (error) {
+    console.log("error accept request", error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
 
 
 

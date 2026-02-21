@@ -21,6 +21,7 @@ export const updateUser = createAsyncThunk(
       });
 
       if (data.success) {
+         toast.success(data.message)
         return data.user; // ✅ just return user
       } else {
         return rejectWithValue(data.message); // ✅ reject for toast.promise

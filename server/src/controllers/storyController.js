@@ -4,7 +4,6 @@ import imagekit from '../config/imagekit.js';
 import User from '../models/userModel.js';
 import { inngest } from '../ingest/index.js';
 
-
 import fs from 'fs';
 
 export const addUserStory = async (req, res) => {
@@ -50,7 +49,9 @@ export const addUserStory = async (req, res) => {
 
 
 
+
 // get story allm users
+
 export const getStory = async(req, res) => {
    try {
     const { userId } = req.auth();

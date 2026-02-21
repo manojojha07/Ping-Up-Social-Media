@@ -11,6 +11,7 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}) => {
     const navigate = useNavigate();
     const user = useSelector((state) => state.user.value);
     const { signOut } = useClerk();
+    
   return (
     <div className={`w-60 xl:w-72 bg-white border-r border-gray-300 flex flex-col 
         justify-between items-center max-sm:absolute top-0 bottom-0 z-20

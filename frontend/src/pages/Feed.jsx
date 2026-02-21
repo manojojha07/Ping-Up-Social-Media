@@ -54,14 +54,14 @@ const Feed = () => {
       </div>
       {/* Right side bar */}
       <div className="max-xl:hidden sticky top-0">
-<div className="w-[20rem] max-w-xs bg-white text-xs p-4 rounded-md flex flex-col gap-2 shadow">
+<div className="w-[20rem] max-w-xs bg-white text-xs p-4 rounded-md inline-flex flex-col gap-2 shadow">
           <h3 className='text-slate-800 font-semibold'>Sponsored</h3>
           <img
             src={assets.sponsored_img}
             className="w-75 h-48 rounded-md object-cover"
             alt=""
           />
-          <p className='text-slate-600'>|Email merketing</p>
+          <p className='text-slate-600'>Email merketing</p>
           <p className='text-slate-400'> Supercharge ypour marketing with a powerful,easy-to-usep
             platform built for results.</p>
         </div>

@@ -59,6 +59,8 @@ try {
     // user connection and folllwings
     const userIds = [ userId, ...user.connections, ...user.following];
     const posts = await Post.find({user :{$in: userId}}).populate('user').sort({createdAt: -1})
+    
+    
 
     res.json({success:true, posts});
 

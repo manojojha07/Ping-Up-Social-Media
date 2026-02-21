@@ -14,7 +14,7 @@ export const sseController = (req, res) => {
 
 
         // set servr site event header
-        res.setHeader('Content-Type', 'text/event-steam');
+        res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
         res.setHeader('Access-Control-Allow-Origin', '*');
@@ -23,7 +23,7 @@ export const sseController = (req, res) => {
         connections[userId] = res
 
         //    send an initial event in the client
-        res.write('log: Connected tio SSE strem\n\n')
+        res.write('log: Connected to SSE stream\n\n')
 
         // handle client disconnection
         res.on('close', () => {
@@ -78,7 +78,7 @@ export const sendMessage =async(req, res) => {
         const messageWithUserData = await Message.findById(message._id).populate('from_user_id');
         
         if(connections[to_user_id]){
-            connections[to_user_id].write(`data : ${JSON.stringify(messageWithUserData)}\n\n`)
+            connections[to_user_id].write(`data: ${JSON.stringify(messageWithUserData)}\n\n`);
         }
 
     } catch (error) {
@@ -99,7 +99,7 @@ export const getChatMessages = async (req, res) => {
                 {from_user_id : userId, to_user_id},
                 {from_user_id: to_user_id, to_user_id: userId},
             ]
-        }).sort({created_at :-1});
+        }).sort({created_at : -1});
 
         // mark mesage as seen
         await Message.updateMany({from_user_id: to_user_id, to_user_id:userId}, {seen:true});
@@ -116,7 +116,7 @@ export const getUserRecentMessages = async(req, res) => {
 try {
     const { userId } = req.auth();
     const messages = await Message.find({to_user_id: userId})
-        .populate('from_user_id ,to_user_id').sort({created_at : -1});
+        .populate('from_user_id to_user_id').sort({created_at : -1});
 
     res.json({success:true, messages});
     

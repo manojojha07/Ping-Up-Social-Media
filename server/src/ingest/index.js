@@ -107,9 +107,9 @@ const sendConnectionRequestReminder = inngest.createFunction(
     await step.sleepUntil('wait-for-24-hours', in24Hors);
     await step.run('send-connection-request-reminder', async () => {
       const connection = await Connection.findById(connectionId).populate('from_user_id to_user_id');
-      if (connection === "accepted") {
-        return { message: 'Already accepted' }
-      }
+      if (!connection || connection.status === "accepted") {
+  return { message: "Already accepted" };
+}
       const subject = ` 👋 New Connection Request`;
       const body = `
       <div style="font-family: Arial, sans-serif; padding: 20px;">
@@ -136,17 +136,16 @@ const sendConnectionRequestReminder = inngest.createFunction(
 // inggest function to delte story after 24 hours
 const deleteStory = inngest.createFunction(
   { id: " story-delete" },
-  { event: 'app.story.delete' },
+  { event: 'app/story.delete' },
   async ({ event, step }) => {
     const { storyId } = event.data;
     const in24Hours = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    await step.sleepUntil('wait-for 24', in24Hours)
+    await step.sleepUntil('wait-for-24', in24Hours)
     await step.run('delete-story', async () => {
       await Story.findByIdAndDelete(storyId)
       return { message: "Story deleted!" }
     })
-
   }
 )
 

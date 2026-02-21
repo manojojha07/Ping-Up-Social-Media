@@ -5,8 +5,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
 import api from '../api/axios';
-import { addMessage, fetchMessages, resetMessages } from '../features/messages/messageSlice';
+import { addMessage, fetchMessages, resetMessages } from '../features/messages/messageSlice.js';
 import toast from 'react-hot-toast';
+
+
+ console.log("backend url from chat box :> " ,import.meta.env.VITE_BASE_URL);
+ 
+
 
 const ChatBox = () => {
 
@@ -17,6 +22,7 @@ const ChatBox = () => {
   const { pathname } = useLocation();
   const pathnameRef = useRef(pathname)
 
+  
   const dispatch = useDispatch()
 
   const [text, setText] = useState('');
@@ -32,6 +38,8 @@ const ChatBox = () => {
       const token = await getToken();
       dispatch(fetchMessages({token, userId}))
     } catch (error) {
+      console.log("fatchng problam chatbox error");
+      
       toast.error(error.message);
     }
   }
@@ -49,6 +57,10 @@ try {
   const  { data } = await api.post('/api/message/send', formData, {headers:{
     Authorization : `Bearer ${token}`
   }})
+
+   console.log("SSE URL:", `${import.meta.env.VITE_BASE_URL}/api/message/${user?._id}?token=...`);
+
+
   if(data.success){
     setText('')
     setImages(null)
@@ -57,9 +69,15 @@ try {
     throw new Error(data.message)
   }
 } catch (error) {
-  toast.error(error.message)
+  console.log("error sent message chatbox");
+  
+  toast.error(
+   error.message
+  );
 }
   }
+
+
 
   useEffect(()=> {
     fetchUserMessages();
@@ -83,7 +101,7 @@ pathnameRef.current = pathname
 
 useEffect(() => {
   if (user) {
-    const eventSource = new EventSource(import.meta.env.VITE_BASE_URL + '/api/message/' + user.id);
+    const eventSource = new EventSource(import.meta.env.VITE_BASE_URL + '/api/message/' + user._id);
 
     eventSource.onmessage = (event) => {
       const message = JSON.parse(event.data);
@@ -93,7 +111,7 @@ useEffect(() => {
     };
 
     return () => {
-      eventSource.close(); // cleanup on unmount
+      eventSource.close();
     };
   }
 }, [user, dispatch]);
@@ -137,7 +155,7 @@ useEffect(() => {
        <div className="px-4">
         <div className="flex items-center gap-3 pl-5 p-1.5 bg-white w-full max-w-xl mx-auto border border-gray-200 shadow rounded-full mb-5">
           <input type="text" className='flex-1 outline-none text-salte-700' placeholder='Type a message...' onChange={(e) =>setText(e.target.value)} value={text}
-          onKeyDown={e =>key === 'Enter' && sendMessage()} />
+         onKeyDown={(e) => e.key === 'Enter' && sendMessage()} />
           <label htmlFor="image">
             {
               image 

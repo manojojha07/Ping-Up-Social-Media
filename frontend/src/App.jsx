@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react'
-import { Route, Routes, Navigate, useLocation } from 'react-router-dom'
-import { useUser, useAuth } from '@clerk/clerk-react'
+import React, { useEffect, useRef } from 'react'
+import { Route, Routes, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth, useUser } from '@clerk/clerk-react'
 import { useDispatch } from 'react-redux'
 import toast, { Toaster } from 'react-hot-toast'
 
@@ -16,21 +16,23 @@ import LayOut from './pages/LayOut'
 
 import { fetchUser } from './features/user/userSlice'
 import { fetchConnections } from './features/connections/connectionSlice'
-import { useRef } from 'react'
 import { addMessage } from './features/messages/messageSlice'
 import Notification from './components/Notification'
 
 const App = () => {
-  const { user } = useUser();
-  const { getToken } = useAuth();
-  const {pathname} = useLocation();
-
-  const pathnameRef = useRef(pathname)
-
+  const { user } = useUser()
+  const { getToken } = useAuth()
+  const { pathname } = useLocation()
   const dispatch = useDispatch()
+  const pathnameRef = useRef(pathname)
+  const navigate = useNavigate()
 
+  console.log("Clerk user:", user)
+  console.log("Clerk user id:", user?.id)
+
+  // Fetch user and connections once user is available
   useEffect(() => {
-    if (!user) return;
+    if (!user) return
 
     const fetchData = async () => {
       const token = await getToken()
@@ -41,62 +43,68 @@ const App = () => {
     fetchData()
   }, [user, getToken, dispatch])
 
-
-  useEffect(() => (
-    pathnameRef.current = pathname
-  ), [pathname])
-
-  console.log(import.meta.env.VITE_BACKEND_URL);
-
-
+  // Keep pathname in ref
   useEffect(() => {
-    if (user) {
-      const eventSource = new EventSource(import.meta.env.VITE_BACKEND_URL + '/api/message/' + user._id)
+    pathnameRef.current = pathname
+  }, [pathname])
 
-      eventSource.onmessage = (event) => {
-        const message = JSON.parse(event.data)
+  // Polling messages every 5 seconds
+  useEffect(() => {
+    if (!user || !user.id) return
 
-        if(pathnameRef.current === ('/messages/' + message.from_user_id._id)){
-          dispatch(addMessage(message))
-        }else{
-          toast.custom((t)=> (
-            <Notification t={t} message={message}/>
-          ),{position: "bottom-right"})
+    const fetchMessages = async () => {
+      try {
+        const res = await fetch(
+          import.meta.env.VITE_BASE_URL + '/api/message/' + user.id
+        )
+        const data = await res.json()
+
+        if (data.success && data.message) {
+          const message = data.message
+
+          if (pathnameRef.current === '/messages/' + message.from_user_id.id) {
+            dispatch(addMessage(message))
+          } else {
+            toast.custom(
+              (t) => <Notification t={t} message={message} />,
+              { position: 'bottom-right' }
+            )
+          }
         }
-      }
-      return () => {
-        eventSource.close();
+      } catch (err) {
+        console.log(err)
       }
     }
+
+    const interval = setInterval(fetchMessages, 5000)
+    return () => clearInterval(interval)
   }, [user, dispatch])
+
+  // Redirect user to login if not logged in
+  useEffect(() => {
+    if (!user) {
+      navigate('/login')
+    }
+  }, [user, navigate])
 
   return (
     <>
       <Toaster />
-
       <Routes>
         {!user ? (
-          <>
-            {/* ONLY login when user is null */}
-            <Route path="*" element={<Login />} />
-          </>
+          <Route path="*" element={<Login />} />
         ) : (
-          <>
-            {/* Protected app routes */}
-            <Route path="/" element={<LayOut />}>
-              <Route index element={<Feed />} />
-              <Route path="messages" element={<Message />} />
-              <Route path="messages/:userId" element={<ChatBox />} />
-              <Route path="connections" element={<Connect />} />
-              <Route path="discover" element={<Discover />} />
-              <Route path="profile" element={<Profile />} />
-              <Route path="profile/:profileId" element={<Profile />} />
-              <Route path="create-post" element={<CreatePost />} />
-            </Route>
-
-            {/* Redirect unknown routes */}
+          <Route path="/" element={<LayOut />}>
+            <Route index element={<Feed />} />
+            <Route path="messages" element={<Message />} />
+            <Route path="messages/:userId" element={<ChatBox />} />
+            <Route path="connections" element={<Connect />} />
+            <Route path="discover" element={<Discover />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="profile/:profileId" element={<Profile />} />
+            <Route path="create-post" element={<CreatePost />} />
             <Route path="*" element={<Navigate to="/" />} />
-          </>
+          </Route>
         )}
       </Routes>
     </>
