@@ -9,7 +9,7 @@ export const  connectedDB = async() => {
           console.log("✅ Connected to MongoDB successfully :> ");
           
     } catch (error) {
-        console.log("❌ Failed to connect to MongoDB " );
+        console.log("❌ Failed to connect to MongoDB ", error );
         
     }
 }

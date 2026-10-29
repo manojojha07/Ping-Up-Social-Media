@@ -2,7 +2,7 @@ import express from 'express'
 import cors  from 'cors'
 import 'dotenv/config'
 import { connectedDB } from './src/config/db.config.js';
-import { inngest, functions } from "./src/ingest/index.js"
+import { inngest, functions } from "./src/ingest/index.js";
 import { serve } from "inngest/express";
 import { clerkMiddleware } from '@clerk/express'
 import userRouter from './src/routes/userRoutes.js';
