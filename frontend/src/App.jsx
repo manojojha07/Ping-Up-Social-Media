@@ -11,7 +11,7 @@ import ChatBox from './pages/ChatBox'
 import Connect from './pages/Connect'
 import Discover from './pages/Discover'
 import Profile from './pages/Profile'
-import CreatePost from './pages/createPost'
+import CreatePost from './pages/CreatePost'
 import LayOut from './pages/LayOut'
 
 import { fetchUser } from './features/user/userSlice'
