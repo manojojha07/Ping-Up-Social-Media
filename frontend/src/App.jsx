@@ -20,8 +20,8 @@ import { addMessage } from './features/messages/messageSlice'
 import Notification from './components/Notification'
 
 const App = () => {
-  const { user } = useUser()
-  const { getToken } = useAuth()
+const { user, isLoaded } = useUser()
+const { getToken } = useAuth()
   const { pathname } = useLocation()
   const dispatch = useDispatch()
   const pathnameRef = useRef(pathname)
